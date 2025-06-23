@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Фінансовий Дашборд</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      /* Додаємо padding-bottom для фіксованого меню навігації та кнопки, оптимізовано */
+      padding-bottom: 120px; /* Достатньо місця для фіксованого меню та кнопки над ним */
+    }
+    /* Додаткові стилі для Chart.js, щоб він був адаптивним всередині гнучких контейнерів */
+    canvas {
+        max-width: 100%;
+        height: auto; /* Забезпечує збереження пропорцій */
+    }
+  </style>
+</head>
+<body class="bg-[#1e0e3e] p-6 font-sans text-white"> <!-- min-h-screen видалено -->
+
+  <div class="mb-6 flex flex-col sm:flex-row justify-between items-center sm:items-start">
+    <h1 class="text-3xl font-bold mb-4 sm:mb-0">Вітаємо, {{ username }}!</h1>
+    <div class="flex flex-wrap justify-center sm:justify-end gap-2 sm:space-x-2" id="period-buttons">
+      <button data-period="today" class="period-btn px-4 py-2 bg-[#6c3df4] hover:bg-[#5a2de0] rounded text-sm font-semibold w-full sm:w-auto">Сьогодні</button>
+      <button data-period="yesterday" class="period-btn px-4 py-2 bg-[#442277] hover:bg-[#5a2de0] rounded text-sm font-semibold w-full sm:w-auto">Вчора</button>
+      <button data-period="day_before_yesterday" class="period-btn px-4 py-2 bg-[#442277] hover:bg-[#5a2de0] rounded text-sm font-semibold w-full sm:w-auto">Позавчора</button>
+      <button data-period="week" class="period-btn px-4 py-2 bg-[#442277] hover:bg-[#5a2de0] rounded text-sm font-semibold w-full sm:w-auto">Тиждень</button>
+      <button data-period="month" class="period-btn px-4 py-2 bg-[#442277] hover:bg-[#5a2de0] rounded text-sm font-semibold w-full sm:w-auto">Місяць</button>
+    </div>
+  </div>
+
+  <!-- Main Grid Layout -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- Витрати за сьогодні -->
+    <div class="bg-[#2d145f] p-6 rounded-2xl shadow-lg flex flex-col min-h-[200px] text-white">
+      <h2 class="font-bold text-xl mb-4">Витрати за сьогодні</h2>
+      <div class="relative flex flex-col sm:flex-row sm:space-x-6 items-center">
+        <div class="relative w-full max-w-[200px] h-[200px] mb-4 sm:mb-0">
+          <canvas id="todayExpensesChart"></canvas>
+          <div class="absolute inset-0 flex items-center justify-center text-xl font-bold">
+            ... грн
+          </div>
+        </div>
+        <ul id="category-breakdown" class="space-y-3 text-sm text-white w-full sm:max-w-[220px]">
+        </ul>
+      </div>
+    </div>
+
+    <!-- Грошовий потік за місяць -->
+    <div class="bg-[#2d145f] p-6 rounded-2xl shadow-lg flex flex-col min-h-[250px]">
+      <h2 class="font-bold text-xl mb-4">Грошовий потік за місяць</h2>
+      <div class="mb-4 text-purple-200">
+        <p class="text-green-400 font-semibold">Отримане: <span id="incomeAmount">...</span> грн</p>
+        <div class="w-full bg-purple-800 rounded h-3 mb-3">
+          <div id="incomeBar" class="bg-green-500 h-3 rounded w-0"></div>
+        </div>
+        <p class="text-red-400 font-semibold">Витрачене: <span id="expenseAmount">...</span> грн</p>
+        <div class="w-full bg-purple-800 rounded h-3 mb-3">
+          <div id="expenseBar" class="bg-red-500 h-3 rounded w-0"></div>
+        </div>
+        <p class="font-semibold text-white">Залишок: <span id="balanceAmount">...</span> грн</p>
+      </div>
+    </div>
+
+    <!-- Записи (таблиця) -->
+    <div class="bg-[#2d145f] p-6 rounded-2xl shadow-lg md:col-span-2 lg:col-span-1 row-span-2 flex flex-col justify-between">
+      <div>
+        <h2 class="font-bold text-xl mb-4">Записи</h2>
+        <!-- Додаємо data-label до кожного <td> для адаптивності таблиці на мобільних пристроях -->
+        <table class="responsive-table w-full text-sm text-purple-200">
+          <thead>
+            <tr class="border-b border-purple-500">
+              <th class="pb-2">ID</th>
+              <th class="pb-2">Дата</th>
+              <th class="pb-2">Час</th>
+              <th class="pb-2">Категорія</th>
+              <th class="pb-2">Сума</th>
+              <th class="pb-2 text-center">Дії</th> <!-- New column for actions -->
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in records %}
+              {% if record is not none %} {# Додана перевірка #}
+              <tr class="border-t border-purple-500 table-row-with-actions" data-record-id="{{ record[0] }}">
+                <td data-label="ID">{{ record[0] }}</td>
+                <td data-label="Дата">{{ record[1].split(' ')[0] }}</td>
+                <td data-label="Час">{{ record[1].split(' ')[1][:5] }}</td>
+                <td data-label="Категорія">{{ record[2] }}</td>
+                <td data-label="Сума">{{ record[3] }} грн</td>
+                <td data-label="Дії" class="delete-button-cell flex items-center justify-center"> <!-- Додано flex для вирівнювання -->
+                  <button class="delete-btn text-red-500 hover:text-red-700 font-bold py-1 px-2 rounded-full text-lg leading-none transition-colors duration-200" data-id="{{ record[0] }}">&times;</button>
+                </td>
+              </tr>
+              {% endif %} {# Кінець перевірки #}
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-4">Записів поки немає</td> <!-- Updated colspan -->
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <!-- Кнопка "Додати запис" тепер поза контейнером таблиці і буде фіксовано позиціонуватися -->
+    </div>
+
+    <!-- Графік грошового потоку -->
+    <div class="bg-[#2d145f] p-6 rounded-2xl shadow-lg col-span-1 md:col-span-2 mt-6 lg:mt-0">
+      <h2 class="font-bold text-xl mb-4">Графік грошового потоку</h2>
+      <canvas id="cashFlowChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Модальне вікно -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 hidden p-4">
+    <div class="bg-[#2d145f] text-white p-6 rounded-2xl w-full max-w-sm md:w-[360px] relative">
+      <button onclick="document.getElementById('modal').classList.add('hidden')" class="absolute top-2 right-4 text-xl text-purple-200 hover:text-white">&times;</button>
+      <h2 class="font-bold text-lg mb-4">Додати записи</h2>
+      <form method="POST">
+        <div class="flex justify-between mb-4" id="type-selector">
+          <button type="button" class="px-4 py-1 rounded-full bg-[#6c3df4] font-semibold text-sm flex-1 mr-2" data-type="expense">Витрати</button>
+          <button type="button" class="px-4 py-1 rounded-full bg-[#442277] font-semibold text-sm flex-1 ml-2" data-type="income">Дохід</button>
+        </div>
+        <div class="flex flex-wrap gap-2 text-sm mb-4" id="categories-container">
+          {% for category in categories %}
+          <button type="button" class="category-btn bg-[#442277] px-3 py-1 rounded-full" data-category-id="{{ category[0] }}" data-type="{{ category[2] }}">
+            {{ category[1] }}
+          </button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="category_id" id="selected-category-id" required>
+        <input type="hidden" name="type" id="selected-type" value="expense" required>
+        <input type="text" name="amount" placeholder="Введіть суму" class="w-full p-2 rounded bg-[#1f0f3a] text-white mb-4 outline-none" required>
+        <button type="submit" class="w-full bg-[#6c3df4] hover:bg-[#5a2de0] py-2 rounded font-semibold text-sm">
+          Зберегти
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Фіксована кнопка "Додати запис" -->
+  <div class="fixed-add-record-button">
+    <button onclick="document.getElementById('modal').classList.remove('hidden')" class="bg-[#6c3df4] hover:bg-[#5a2de0] text-white py-3 px-6 rounded-full font-semibold text-lg shadow-lg">
+      + Додати запис
+    </button>
+  </div>
+
+  <div class="mt-8 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 fixed-bottom-nav">
+    <a href="{{ url_for('main.dashboard') }}" class="bg-[#6c3df4] hover:bg-[#5a2de0] text-white px-6 py-3 rounded font-semibold text-center w-full sm:w-auto">
+      Дашборд
+    </a>
+    <a href="{{ url_for('main.prediction') }}" class="bg-[#6c3df4] hover:bg-[#5a2de0] text-white px-6 py-3 rounded font-semibold text-center w-full sm:w-auto">
+      Прогнозування
+    </a>
+  </div>
+
+<script src="/static/index.js"></script>
+
+</body>
+</html>

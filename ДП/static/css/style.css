@@ -1,0 +1,189 @@
+body {
+    font-family: 'Noto Sans', sans-serif;
+    /* Забезпечуємо, що body не створює горизонтального прокручування */
+    overflow-x: hidden;
+    /* Додаємо padding-bottom, щоб контент не ховався за фіксованим меню */
+    padding-bottom: 100px; /* Приблизне значення, можливо, потрібно буде відкоригувати */
+}
+
+/* Стилі для клітинки таблиці з кнопкою видалення */
+.delete-button-cell {
+    display: flex; /* Робимо клітинку flex-контейнером */
+    align-items: center; /* Вирівнюємо елементи по центру вертикально */
+    justify-content: center; /* Центруємо елементи по горизонталі */
+    padding: 0 5px; /* Зменшуємо padding, якщо потрібно */
+    position: relative; /* Робимо відносним для абсолютної кнопки, якщо вона буде позиціонуватись відносно цієї комірки */
+}
+
+/* Стилі для кнопки видалення на великих екранах (за замовчуванням) */
+.responsive-table .delete-btn {
+    opacity: 0; /* Приховуємо кнопку за замовчуванням */
+    visibility: hidden;
+    transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+}
+
+/* Показуємо кнопку при наведенні на рядок таблиці */
+.responsive-table tr:hover .delete-btn {
+    opacity: 1; /* Показуємо кнопку при наведенні на рядок */
+    visibility: visible;
+}
+
+/* Медіа-запити для адаптивного дизайну */
+@media (max-width: 768px) {
+    .responsive-table, .responsive-table thead, .responsive-table tbody, .responsive-table th, .responsive-table td, .responsive-table tr {
+        display: block; /* Кожен елемент таблиці як блок */
+    }
+
+    .responsive-table thead tr {
+        /* Приховуємо заголовок таблиці, так як мітки будуть у data-label */
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .responsive-table tr {
+        margin-bottom: 15px; /* Відступ між "картками" рядків */
+        border: 1px solid #442277; /* Рамка для кожного рядка */
+        border-radius: 8px; /* Заокруглені кути для рядків */
+        padding: 10px; /* Внутрішній відступ */
+        background-color: #2d145f; /* Фон, як у інших блоків */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Тінь */
+        position: relative; /* Робимо рядок відносним для абсолютної кнопки */
+    }
+
+    .responsive-table td {
+        border: none; /* Прибираємо межі між комірками */
+        border-bottom: 1px solid rgba(108, 61, 244, 0.2); /* Легка межа між "полями" рядка */
+        position: relative; /* Робимо комірку відносною для її мітки */
+        padding-left: 50%; /* Звільняємо місце для "міток" */
+        text-align: right;
+        min-height: 30px; /* Мінімальна висота для кращого вигляду */
+        display: flex;
+        align-items: center;
+        justify-content: flex-end; /* Вирівнювання тексту справа */
+    }
+
+    .responsive-table td:last-child {
+        border-bottom: 0; /* Прибираємо межу для останньої комірки */
+    }
+
+    .responsive-table td:before {
+        /* Створюємо псевдоелемент для відображення заголовка (мітки) */
+        content: attr(data-label); /* Беремо текст з атрибута data-label */
+        position: absolute;
+        left: 10px; /* Відступ зліва */
+        width: 45%; /* Ширина мітки */
+        padding-right: 10px;
+        white-space: nowrap; /* Не переносити текст мітки */
+        text-align: left; /* Вирівнювання мітки зліва */
+        font-weight: bold;
+        color: #6c3df4; /* Колір мітки */
+    }
+
+    /* Адаптація діаграми витрат за сьогодні */
+    #todayExpensesChart {
+        width: 100% !important; /* Важливо для Chart.js */
+        height: auto !important;
+        min-height: 150px; /* Мінімальна висота для видимості на мобільних */
+    }
+
+    /* Адаптація категорії витрат під діаграмою на мобільних */
+    #category-breakdown {
+        width: 100%;
+        max-width: none; /* Знімаємо обмеження max-width */
+    }
+
+    /* Модальне вікно на мобільних */
+    #modal > div { /* Це внутрішній блок модалки */
+        width: 100%; /* На мобільних займаємо всю ширину */
+        max-width: none;
+        margin: 0 10px; /* Трохи відступу з боків */
+    }
+
+    /* На мобільних кнопка видалення завжди видима і позиціонується абсолютно відносно РЯДКА */
+    .responsive-table .delete-btn {
+        opacity: 1; /* Завжди видима на мобільних */
+        visibility: visible;
+        position: absolute; /* Абсолютне позиціонування всередині РЯДКА (tr) */
+        top: 50%; /* Центруємо по вертикалі відносно tr */
+        right: 5px; /* Зправа */
+        transform: translateY(-50%); /* Коригуємо для точного вертикального центрування */
+        background: rgba(45, 20, 95, 0.9); /* Трохи темніший фон */
+        padding: 4px 8px; /* Зменшуємо padding */
+        border-radius: 50%; /* Кругла форма */
+        font-size: 1.2em; /* Трохи більший розмір хрестика */
+        line-height: 1; /* Забезпечуємо компактність */
+        z-index: 10; /* Щоб була поверх інших елементів */
+        border: 1px solid rgba(108, 61, 244, 0.5); /* Додаємо легку рамку */
+    }
+
+    .responsive-table tr:hover .delete-btn {
+        /* Прибираємо ефект ховеру, якщо кнопка вже видима */
+        opacity: 1;
+    }
+}
+
+/* Додаткові стилі для дуже малих екранів (смартфонів) */
+@media (max-width: 480px) {
+    .p-6 {
+        padding: 1rem; /* Зменшимо padding для всього body */
+    }
+
+    .text-3xl {
+        font-size: 2rem; /* Трохи зменшимо великі заголовки */
+    }
+
+    .text-xl {
+        font-size: 1.25rem; /* Зменшимо заголовки секцій */
+    }
+
+    /* Кнопки періодів - робимо їх більш компактними */
+    #period-buttons button {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+    }
+
+    /* Окремо кнопки типу та категорії в модалці */
+    #type-selector button, #categories-container button {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+.fixed-add-record-button {
+    position: fixed;
+    bottom: 85px; /* Розміщуємо вище за навігаційне меню (яке починається з bottom: 0 і має padding) */
+    left: 88%;
+    transform: translateX(-50%);
+    z-index: 1001; /* Вище за навігаційне меню */
+    /* Додаткові стилі для кнопки для кращого вигляду */
+}
+
+/* Стилі для фіксованої навігації внизу */
+.fixed-bottom-nav {
+    position: fixed; /* Фіксоване позиціонування */
+    bottom: 0; /* Прив'язка до нижнього краю */
+    left: 0; /* Прив'язка до лівого краю */
+    right: 0; /* Прив'язка до правого краю */
+    background-color: #2d145f; /* Фон меню, як у інших блоків */
+    padding: 20px; /* Відступи всередині меню */
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1); /* Тінь зверху */
+    z-index: 1000; /* Перекриває інші елементи */
+    display: flex; /* Для центрування кнопок */
+    justify-content: center; /* Центрування кнопок по горизонталі */
+    gap: 24px; /* Відстань між кнопками */
+    align-items: center; /* Вирівнювання по центру по вертикалі */
+}
+
+/* Адаптивність кнопок у фіксованому меню на мобільних */
+@media (max-width: 640px) { /* Tailwind's sm breakpoint */
+    .fixed-bottom-nav {
+        flex-direction: column; /* Кнопки в стовпчик на мобільних */
+        gap: 12px; /* Зменшуємо відступ */
+        padding: 15px; /* Зменшуємо padding */
+    }
+    .fixed-bottom-nav a {
+        width: 100%; /* Кнопки займають всю ширину на мобільних */
+        text-align: center;
+    }
+}
